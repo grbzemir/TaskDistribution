@@ -173,6 +173,7 @@ Now listening on: http://localhost:5080
 > **F5 yerine Ctrl+F5 kullanmanızı öneririz.** Uygulama, kullanıcıya anlaşılır hata mesajı döndürmek için iş kuralı
 > exception'ları fırlatır (örneğin görevi olan bir personeli silmeye çalışmak). Debug modunda (F5) Visual Studio bu
 > exception'larda programı durdurur ve frontend'deki istek zaman aşımına düşer.
+> F5 ile başlatcaksanız Visual Studio da exception'a tıklayıp tik'i kaldırabilirsiniz sizin tarafınızdaki hata yönetim ayarlarınıza bağlı.
 
 #### Backend'in çalıştığını kontrol edin
 
