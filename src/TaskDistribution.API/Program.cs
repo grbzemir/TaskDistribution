@@ -1,5 +1,8 @@
+using TaskDistribution.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.ContentRootPath);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
