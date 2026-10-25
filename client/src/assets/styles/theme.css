@@ -455,3 +455,154 @@ body {
     opacity: 0;
     transform: translateY(8px);
 }
+
+/* Modal */
+.app-modal {
+    border: 0;
+    border-radius: var(--app-radius);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+}
+
+.app-modal .modal-header,
+.app-modal .modal-footer {
+    border-color: var(--app-border);
+}
+
+.app-modal .modal-footer {
+    gap: 8px;
+}
+
+.modal-enter-active,
+.modal-leave-active {
+    transition: opacity 0.15s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+    opacity: 0;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--app-border);
+}
+
+.search-input {
+    position: relative;
+    flex: 1 1 240px;
+    max-width: 320px;
+}
+
+.search-input .bi {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: var(--app-muted);
+}
+
+.search-input .form-control {
+    padding-left: 36px;
+}
+
+.toolbar .form-select {
+    width: auto;
+    min-width: 150px;
+}
+
+/* People */
+.avatar {
+    display: inline-grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.avatar-muted {
+    background: #f1f5f9;
+    color: #94a3b8;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.role-developer {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.role-analyst {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.role-manager {
+    background: #ede9fe;
+    color: #5b21b6;
+}
+
+.activity-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8125rem;
+}
+
+.activity-status::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.activity-active {
+    color: #16a34a;
+}
+
+.activity-inactive {
+    color: #94a3b8;
+}
+
+.row-inactive td {
+    color: var(--app-muted);
+}
+
+/* Table actions */
+.table-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.table-actions .btn {
+    --bs-btn-padding-x: 0.5rem;
+    --bs-btn-padding-y: 0.25rem;
+    color: var(--app-muted);
+}
+
+.table-actions .btn:hover {
+    background: var(--app-surface-muted);
+    color: var(--app-text);
+}
+
+.table-actions .btn-delete:hover {
+    background: #fef2f2;
+    color: #dc2626;
+}
