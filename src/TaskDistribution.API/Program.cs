@@ -40,6 +40,8 @@ var app = builder.Build();
 
 await app.Services.MigrateDatabaseAsync();
 
+app.UseCors(ClientCorsPolicy);
+
 app.UseExceptionHandler();
 
 if (app.Environment.IsDevelopment())
@@ -51,8 +53,6 @@ else
 {
     app.UseHttpsRedirection();
 }
-
-app.UseCors(ClientCorsPolicy);
 
 app.UseAuthorization();
 
