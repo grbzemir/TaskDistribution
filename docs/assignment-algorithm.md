@@ -1,90 +1,90 @@
-# Developer Assignment Algorithm
+# Developer Atama Algoritması
 
-This document describes how the system selects a developer for an analyzed work item.
-The implementation lives in `src/TaskDistribution.Application/Features/Assignments`.
+Bu doküman, sistemin analiz edilmiş bir görev için developer'ı nasıl seçtiğini anlatır.
+Algoritmanın kodu `src/TaskDistribution.Application/Features/Assignments` klasöründedir.
 
 ## Flowchart
 
 ```mermaid
 flowchart TD
-    Start(["Assign request for a work item"]) --> IsAnalyzed{"Is the work item<br/>in Analyzed status?"}
-    IsAnalyzed -- No --> RejectStatus[["409 Conflict<br/>Only analyzed work items can be assigned"]]
-    IsAnalyzed -- Yes --> LoadDevs["Load active employees<br/>with the Developer role"]
+    Start(["Görev için atama isteği"]) --> IsAnalyzed{"Görevin durumu<br/>Analyzed mı?"}
+    IsAnalyzed -- Hayır --> RejectStatus[["409 Conflict<br/>Sadece analiz edilmiş görevler atanabilir"]]
+    IsAnalyzed -- Evet --> LoadDevs["Rolü Developer olan<br/>aktif personeli getir"]
 
-    LoadDevs --> AnyDev{"Is there at least<br/>one active developer?"}
-    AnyDev -- No --> RejectNoDev[["409 Conflict<br/>No active developer"]]
-    AnyDev -- Yes --> LoadHistory["Load assignment history"]
+    LoadDevs --> AnyDev{"En az bir aktif<br/>developer var mı?"}
+    AnyDev -- Hayır --> RejectNoDev[["409 Conflict<br/>Aktif developer yok"]]
+    AnyDev -- Evet --> LoadHistory["Atama geçmişini getir"]
 
-    LoadHistory --> BuildStats["Build statistics for each developer<br/>• tasks at difficulty d<br/>• total workload<br/>• last task difficulty and time"]
-    BuildStats --> ReadRules["Read enabled rules<br/>from configuration"]
-    ReadRules --> Filter["Keep developers who satisfy<br/>ALL enabled rules"]
+    LoadHistory --> BuildStats["Her developer için istatistik çıkar<br/>• d seviyesindeki görev sayısı<br/>• toplam iş yükü<br/>• son görevinin zorluğu ve tarihi"]
+    BuildStats --> ReadRules["Aktif kuralları<br/>ayarlardan oku"]
+    ReadRules --> Filter["Aktif kuralların HEPSİNİ<br/>sağlayan developer'ları tut"]
 
-    Filter --> AnyEligible{"Is anyone eligible?"}
-    AnyEligible -- Yes --> PoolEligible["Pool = eligible developers"]
-    AnyEligible -- No --> PoolAll["Pool = all active developers<br/>mark assignment as rules relaxed"]
+    Filter --> AnyEligible{"Uygun developer<br/>var mı?"}
+    AnyEligible -- Evet --> PoolEligible["Havuz = uygun developer'lar"]
+    AnyEligible -- Hayır --> PoolAll["Havuz = tüm aktif developer'lar<br/>atamayı 'kurallar esnetildi' olarak işaretle"]
 
     PoolEligible --> Order1
     PoolAll --> Order1
 
-    subgraph Fairness["Fairness ordering (tie breakers in order)"]
-        Order1["1. Fewest tasks at difficulty d"] --> Order2["2. Lowest total workload"]
-        Order2 --> Order3["3. Longest time since last assignment<br/>(never assigned comes first)"]
-        Order3 --> Order4["4. Lowest employee id"]
+    subgraph Fairness["Adalet sıralaması (eşitlikte bir sonraki kritere geçilir)"]
+        Order1["1. d seviyesinde en az görev almış olan"] --> Order2["2. Toplam iş yükü en düşük olan"]
+        Order2 --> Order3["3. En uzun süredir görev almamış olan<br/>(hiç görev almamış olan en önde)"]
+        Order3 --> Order4["4. Id'si en küçük olan"]
     end
 
-    Order4 --> Select["Select the first developer"]
-    Select --> Save["In a single transaction:<br/>assign the work item and<br/>write the assignment log"]
-    Save --> Done(["Return the developer and the reason"])
+    Order4 --> Select["İlk sıradaki developer'ı seç"]
+    Select --> Save["Tek bir transaction içinde:<br/>görevi ata ve<br/>atama kaydını yaz"]
+    Save --> Done(["Seçilen developer'ı ve gerekçeyi döndür"])
 ```
 
-## Rules
+## Kurallar
 
-The case study states that tasks must not be assigned to developers *"in consecutive difficulty"*.
-The sentence can be read in three ways, so each reading is implemented as a separate rule
-(Strategy Pattern, `IAssignmentRule`). The difficulty of the new work item is **d**.
+Case study'de görevlerin *"ardışık zorlukta developerlara atanmaması"* isteniyor. Bu cümle üç farklı şekilde
+okunabildiği için her yorum ayrı bir kural olarak yazıldı (Strategy Pattern, `IAssignmentRule`).
+Yeni görevin zorluğu **d** ile gösterilir.
 
 ```mermaid
 flowchart LR
-    Candidate(["Developer candidate"]) --> A{"Rule A<br/>ConsecutiveDifficulty<br/>(enabled by default)"}
-    A -- "last difficulty is d - 1 or d + 1" --> OutA[["Excluded"]]
-    A -- "otherwise" --> B{"Rule B<br/>ConsecutiveAssignment"}
-    B -- "received the most recent task" --> OutB[["Excluded"]]
-    B -- "otherwise" --> C{"Rule C<br/>ConsecutiveHardTask"}
-    C -- "d and last difficulty are both hard" --> OutC[["Excluded"]]
-    C -- "otherwise" --> In(["Eligible"])
+    Candidate(["Developer adayı"]) --> A{"Kural A<br/>ConsecutiveDifficulty<br/>(varsayılan olarak açık)"}
+    A -- "son görevin zorluğu d - 1 veya d + 1" --> OutA[["Elenir"]]
+    A -- "değilse" --> B{"Kural B<br/>ConsecutiveAssignment"}
+    B -- "en son görevi bu developer aldı" --> OutB[["Elenir"]]
+    B -- "değilse" --> C{"Kural C<br/>ConsecutiveHardTask"}
+    C -- "d ve son görev ikisi de zor" --> OutC[["Elenir"]]
+    C -- "değilse" --> In(["Uygun"])
 ```
 
-| Rule | Key | Reading of the sentence | Default |
-|------|-----|-------------------------|---------|
-| A | `ConsecutiveDifficulty` | A developer cannot receive a task whose difficulty is adjacent (±1) to their last task. Example: last task 5, so 4 and 6 are not allowed. | Enabled |
-| B | `ConsecutiveAssignment` | The developer who received the most recent task cannot receive the next one. | Disabled |
-| C | `ConsecutiveHardTask` | A developer whose last task was hard cannot receive another hard task. "Hard" means difficulty ≥ `HardTaskThreshold` (default 6). | Disabled |
+| Kural | Anahtar | Cümlenin yorumu | Varsayılan |
+|-------|---------|-----------------|------------|
+| A | `ConsecutiveDifficulty` | Bir developer'a, son aldığı görevin zorluğuna komşu (±1) seviyede görev verilmez. Örnek: son görevi 5 ise 4 ve 6 verilemez. | Açık |
+| B | `ConsecutiveAssignment` | En son görevi alan developer, bir sonraki görevi alamaz. | Kapalı |
+| C | `ConsecutiveHardTask` | Son görevi zor olan developer'a yeniden zor görev verilmez. "Zor", `HardTaskThreshold` değeri ve üzerindeki zorluktur (varsayılan 6). | Kapalı |
 
-Only enabled rules are evaluated. A disabled rule is skipped in the diagram above.
-A developer who has never received a task satisfies every rule.
+Sadece açık olan kurallar kontrol edilir. Kapalı bir kural yukarıdaki diyagramda atlanır.
+Daha önce hiç görev almamış bir developer tüm kuralları sağlamış sayılır.
 
-## Definitions
+## Tanımlar
 
-| Term | Definition |
-|------|------------|
-| Last task | The work item most recently assigned to the developer (by assignment time, then by work item id). |
-| Total workload | Sum of the difficulties of all work items ever assigned to the developer, completed ones included. |
-| Tasks at difficulty d | Number of work items with the same difficulty as the new one that the developer has received. |
+| Terim | Tanım |
+|-------|-------|
+| Son görev | Developer'a en son atanan görev. Önce atama zamanına, eşitlikte görev Id'sine bakılır. |
+| Toplam iş yükü | Developer'a şimdiye kadar atanan tüm görevlerin zorluk toplamı. Tamamlanmış görevler de dahildir. |
+| d seviyesindeki görev sayısı | Developer'ın, yeni görevle aynı zorluktaki görevlerden kaç tane aldığı |
 
-## Why this order?
+## Sıralama neden bu şekilde?
 
-1. **Tasks at difficulty d** comes first because the case asks for a fair distribution *per difficulty level*.
-2. **Total workload** balances the overall effort, so one developer does not collect all hard tasks.
-3. **Idle time** spreads work over time when everything else is equal.
-4. **Employee id** makes the result deterministic: the same input always produces the same output, which keeps the algorithm testable.
+1. **d seviyesindeki görev sayısı** ilk sıradadır, çünkü case *zorluk seviyesi bazında* adil dağılım istiyor.
+2. **Toplam iş yükü** genel efor dengesini sağlar. Böylece zor görevler tek bir kişide toplanmaz.
+3. **Boşta geçen süre**, diğer her şey eşitken işi zamana yayar.
+4. **Id** sonucu deterministik yapar: aynı girdi her zaman aynı sonucu verir. Bu da algoritmayı test edilebilir kılar.
 
 ## Fallback
 
-If no developer satisfies every enabled rule (for example, all eight developers last received a level 4 or 6 task
-and the new task is level 5), assignment must not get stuck. The rules are relaxed, the same fairness ordering is applied
-to all active developers, and the assignment log is marked with `IsRuleRelaxed = true`.
+Hiçbir developer açık kuralların hepsini sağlayamazsa atama işlemi kilitlenmemelidir. Örneğin 8 developer'ın hepsinin
+son görevi 4 veya 6 seviyesindeyse ve yeni görev 5 seviyesindeyse, Kural A herkesi eler. Bu durumda kurallar esnetilir,
+aynı adalet sıralaması tüm aktif developer'lara uygulanır ve atama kaydı `IsRuleRelaxed = true` olarak işaretlenir.
 
 ## Transaction
 
-Reading the history, selecting the developer, updating the work item and writing the assignment log run inside one
-database transaction. If any step fails, nothing is saved.
+Geçmişin okunması, developer'ın seçilmesi, görevin güncellenmesi ve atama kaydının yazılması tek bir veritabanı
+transaction'ı içinde çalışır. Adımlardan biri başarısız olursa hiçbir değişiklik kaydedilmez.

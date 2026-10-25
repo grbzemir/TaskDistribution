@@ -1,153 +1,197 @@
-# TaskFlow · Fair Task Distribution
+# TaskFlow · Adil Görev Dağıtım Sistemi
 
-A web application that digitalizes the daily task flow of a software unit. Users open work items, analysts set their
-difficulty by choosing a task type, and the system **automatically assigns the fairest developer** while making sure
-developers never receive tasks of consecutive difficulty.
+Bir yazılım biriminin günlük iş akışını dijitalleştiren web uygulaması. Kullanıcılar görev (work item) açar, analistler
+görevin işlem tipini seçerek zorluk seviyesini belirler ve sistem, **ardışık zorlukta görev verilmemesi şartını gözeterek
+en adil developer'ı otomatik olarak atar.**
 
-Built as a case study with **ASP.NET Core Web API (.NET 10)**, **EF Core (Code-First) + SQLite** and **Vue 3**.
+**ASP.NET Core Web API (.NET 10)**, **EF Core (Code-First) + SQLite** ve **Vue 3** ile geliştirilmiş bir case study
+projesidir.
 
 ![Dashboard](docs/screenshots/dashboard.png)
 
 ---
 
-## Contents
+## İçindekiler
 
-1. [Features](#features)
-2. [Tech stack and versions](#tech-stack-and-versions)
-3. [Getting started](#getting-started)
-   - [Option A: Docker (one command)](#option-a-docker-one-command)
-   - [Option B: Run locally](#option-b-run-locally)
-4. [How to use](#how-to-use)
-5. [Assignment algorithm](#assignment-algorithm)
-6. [Architecture](#architecture)
-7. [Data model](#data-model)
-8. [API endpoints](#api-endpoints)
-9. [Configuration](#configuration)
-10. [Tests](#tests)
-11. [Design decisions](#design-decisions)
-12. [Screenshots](#screenshots)
+1. [Özellikler](#özellikler)
+2. [Kullanılan teknolojiler ve sürümler](#kullanılan-teknolojiler-ve-sürümler)
+3. [Kurulum ve çalıştırma](#kurulum-ve-çalıştırma)
+   - [Gereksinimler](#gereksinimler)
+   - [1. Projeyi klonlama](#1-projeyi-klonlama)
+   - [2. Backend'i (API) çalıştırma](#2-backendi-api-çalıştırma)
+   - [3. Frontend'i (Vue) çalıştırma](#3-frontendi-vue-çalıştırma)
+   - [Alternatif: Docker ile tek komutta çalıştırma](#alternatif-docker-ile-tek-komutta-çalıştırma)
+   - [Sık karşılaşılan sorunlar](#sık-karşılaşılan-sorunlar)
+4. [Veritabanı (SQLite)](#veritabanı-sqlite)
+5. [Uygulamanın kullanımı](#uygulamanın-kullanımı)
+6. [Atama algoritması](#atama-algoritması)
+7. [Mimari](#mimari)
+8. [API endpoint'leri](#api-endpointleri)
+9. [Yapılandırma](#yapılandırma)
+10. [Testler](#testler)
+11. [Tasarım kararları](#tasarım-kararları)
+12. [Ekran görüntüleri](#ekran-görüntüleri)
 
 ---
 
-## Features
+## Özellikler
 
-- **Automatic, fair developer assignment** based on the difficulty level of each work item
-- **Configurable assignment rules** implemented with the Strategy Pattern (three interpretations of the case rule)
-- **Transparent decisions:** every assignment stores *why* a developer was selected
-- **Fallback mechanism:** assignment never gets stuck when no developer satisfies every rule
-- **Full CRUD** for employees, task types and work items, with validation and business rule checks
-- **Work item lifecycle:** New → Analyzed → Assigned → Completed
-- **Dashboard:** workload per developer, fairness index and a difficulty distribution heatmap
-- **Assignment history** with the reason behind each decision
-- **Automatic database setup:** migrations and seed data are applied on startup, no manual step required
-- **50+ unit tests**, including a simulation that proves the distribution stays fair over 160 assignments
+- **Otomatik ve adil developer ataması:** Her görev, zorluk seviyesine göre en uygun developer'a atanır.
+- **Yapılandırılabilir atama kuralları:** Case'teki belirsiz kuralın üç farklı yorumu, Strategy Pattern ile ayrı kurallar
+  olarak yazıldı. Hangilerinin aktif olacağı ayarlardan seçilir.
+- **Şeffaf kararlar:** Her atamada, developer'ın *neden* seçildiği kaydedilir ve ekranda gösterilir.
+- **Fallback mekanizması:** Hiçbir developer kuralları sağlayamazsa sistem kilitlenmez, kuralları esnetip en adil kişiyi seçer.
+- **Tam CRUD:** Personel, işlem tipi ve görevler için ekleme, listeleme, güncelleme ve silme. Doğrulama ve iş kuralı
+  kontrolleriyle birlikte.
+- **Görev yaşam döngüsü:** New (yeni) → Analyzed (analiz edildi) → Assigned (atandı) → Completed (tamamlandı)
+- **Dashboard:** Developer bazında iş yükü grafiği, adalet endeksi ve zorluk seviyesine göre dağılım ısı haritası
+- **Atama geçmişi:** Tüm atamalar ve her birinin gerekçesi
+- **Otomatik veritabanı kurulumu:** Migration'lar ve başlangıç verileri uygulama açılırken otomatik uygulanır, elle
+  çalıştırılması gereken bir komut yoktur.
+- **50'den fazla birim testi:** 8 developer'a 160 görev dağıtıp dağılımın adil kaldığını kanıtlayan simülasyon testi dahil.
 
-## Tech stack and versions
+---
+
+## Kullanılan teknolojiler ve sürümler
 
 ### Backend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| .NET / C# | 10 (LTS) / C# 14 | Runtime and language |
-| ASP.NET Core Web API | 10 | REST API with controllers |
-| Entity Framework Core | 10 | ORM, Code-First with migrations |
-| SQLite | via `Microsoft.EntityFrameworkCore.Sqlite` 10 | File-based database, no server needed |
-| FluentValidation | 12 | Request validation |
-| Swashbuckle (Swagger) | 10.3 | API documentation and test UI |
-| xUnit | 2.9 | Unit tests |
+| Teknoloji | Sürüm | Kullanım amacı |
+|-----------|-------|----------------|
+| .NET / C# | 10 (LTS) / C# 14 | Çalışma ortamı ve dil |
+| ASP.NET Core Web API | 10 | Controller tabanlı REST API |
+| Entity Framework Core | 10 | ORM, Code-First yaklaşımı ve migration'lar |
+| SQLite | `Microsoft.EntityFrameworkCore.Sqlite` 10 | Dosya tabanlı veritabanı, sunucu kurulumu gerektirmez |
+| FluentValidation | 12 | İstek (request) doğrulama |
+| Swashbuckle (Swagger) | 10.3 | API dokümantasyonu ve test arayüzü |
+| xUnit | 2.9 | Birim testleri |
 
 ### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Vue | 3.5 | UI framework (Composition API, `<script setup>`) |
-| Vite | 8 | Dev server and build tool |
-| Vue Router | 4 | Client-side routing |
-| Pinia | 3 | State management (notifications) |
-| Axios | 1 | HTTP client |
-| Bootstrap | 5.3 (CSS only) | Layout and base styles, custom theme on top |
-| Bootstrap Icons | 1 | Icons |
-| Chart.js + vue-chartjs | 4 + 5 | Dashboard charts |
+| Teknoloji | Sürüm | Kullanım amacı |
+|-----------|-------|----------------|
+| Vue | 3.5 | Arayüz framework'ü (Composition API, `<script setup>`) |
+| Vite | 8 | Geliştirme sunucusu ve derleme aracı |
+| Vue Router | 4 | Sayfalar arası geçiş |
+| Pinia | 3 | Durum yönetimi (bildirimler) |
+| Axios | 1 | HTTP istemcisi |
+| Bootstrap | 5.3 (sadece CSS) | Temel stiller, üzerine özel tema |
+| Bootstrap Icons | 1 | İkonlar |
+| Chart.js + vue-chartjs | 4 + 5 | Dashboard grafikleri |
 
-### Tooling
+### Geliştirme araçları
 
-| Tool | Version |
-|------|---------|
-| .NET SDK | 10.0.100 or later |
-| Node.js | 24 LTS (22.18+ also works) |
-| Docker (optional) | Docker Desktop 4.x / Engine 24+ with Compose v2 |
+| Araç | Sürüm |
+|------|-------|
+| .NET SDK | 10.0.100 veya üzeri |
+| Node.js | 24 LTS (22.18 ve üzeri de çalışır) |
+| Docker (isteğe bağlı) | Docker Desktop, Compose v2 ile |
 
-> Exact package versions are pinned in the `.csproj` files and `client/package-lock.json`.
+> Paketlerin kesin sürümleri `.csproj` dosyalarında ve `client/package-lock.json` dosyasında sabitlenmiştir.
 
 ---
 
-## Getting started
+## Kurulum ve çalıştırma
 
-Clone the repository:
+Proje iki parçadan oluşur ve **ikisinin de aynı anda çalışıyor olması gerekir:**
+
+| Parça | Klasör | Adres |
+|-------|--------|-------|
+| **Backend** (ASP.NET Core Web API) | `src/` | http://localhost:5080 |
+| **Frontend** (Vue 3) | `client/` | http://localhost:5173 |
+
+Veritabanı için ayrıca bir şey kurmanıza gerek yoktur. SQLite veritabanı, backend ilk kez açıldığında otomatik olarak
+oluşturulur.
+
+### Gereksinimler
+
+| Gereksinim | İndirme adresi | Kontrol komutu |
+|------------|----------------|----------------|
+| .NET 10 SDK | https://dotnet.microsoft.com/download/dotnet/10.0 | `dotnet --version` → `10.0.x` |
+| Node.js 24 LTS | https://nodejs.org | `node -v` → `v24.x` |
+| Git | https://git-scm.com | `git --version` |
+
+Sürümleri kontrol etmek için bir terminal (PowerShell, CMD veya Terminal) açıp şu komutları çalıştırın:
 
 ```bash
-git clone https://github.com/<your-username>/TaskDistribution.git
+dotnet --version
+node -v
+git --version
+```
+
+> Bilgisayarınızda .NET veya Node.js kurmak istemiyorsanız [Docker ile çalıştırma](#alternatif-docker-ile-tek-komutta-çalıştırma)
+> bölümüne geçebilirsiniz.
+
+### 1. Projeyi klonlama
+
+Projeyi indirmek istediğiniz klasörde bir terminal açın ve şunları çalıştırın:
+
+```bash
+git clone https://github.com/<kullanici-adi>/TaskDistribution.git
 cd TaskDistribution
 ```
 
-You can run the project in two ways. **Docker is the fastest**: you don't need .NET or Node.js on your machine.
+Klonlama sonrasında klasör yapısı şöyle olmalıdır:
 
-### Option A: Docker (one command)
-
-**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-
-```bash
-docker compose up --build
+```
+TaskDistribution/
+├── client/                  ← Frontend (Vue 3)
+├── src/                     ← Backend (.NET 10)
+├── tests/                   ← Birim testleri
+├── docs/                    ← Flowchart ve ekran görüntüleri
+├── TaskDistribution.sln
+└── README.md
 ```
 
-The first build takes a few minutes. When it's done, open:
+### 2. Backend'i (API) çalıştırma
 
-| What | URL |
-|------|-----|
-| Web application | http://localhost:8080 |
-| Swagger (API) | http://localhost:5080/swagger |
+Backend'i iki farklı şekilde çalıştırabilirsiniz.
 
-The database is created and seeded automatically. It is stored in a Docker volume, so your data survives restarts.
+#### Seçenek A: Terminal ile
 
-```bash
-docker compose down        # stop the containers (data is kept)
-docker compose down -v     # stop and delete the database (fresh start next time)
-```
-
-> If port 8080 or 5080 is already in use on your machine, change the left-hand port in `docker-compose.yml`
-> (for example `"8081:80"`).
-
-### Option B: Run locally
-
-**Requirements:**
-
-- [.NET SDK 10](https://dotnet.microsoft.com/download/dotnet/10.0)
-- [Node.js 24 LTS](https://nodejs.org/)
-
-Check your versions:
-
-```bash
-dotnet --version   # 10.0.x
-node -v            # v24.x (or v22.18+)
-```
-
-#### 1. Start the API
+Projenin kök klasöründe (`TaskDistribution.sln` dosyasının olduğu yer) şu komutu çalıştırın:
 
 ```bash
 dotnet run --project src/TaskDistribution.API --launch-profile http
 ```
 
-The API starts on **http://localhost:5080**. Swagger is available at http://localhost:5080/swagger.
+İlk çalıştırmada NuGet paketleri indirileceği için birkaç dakika sürebilir. Terminalde şu satırı gördüğünüzde API hazırdır:
 
-On the first run the SQLite database file (`src/TaskDistribution.API/taskdistribution.db`) is created, all migrations
-are applied and the seed data is inserted. No `dotnet ef` command is needed.
+```
+Now listening on: http://localhost:5080
+```
 
-> **Visual Studio:** open `TaskDistribution.sln`, set `TaskDistribution.API` as the startup project, select the
-> `http` profile and press **Ctrl+F5**.
+**Bu terminali kapatmayın**, API çalışmaya devam etmelidir.
 
-#### 2. Start the web application
+#### Seçenek B: Visual Studio ile
 
-Open a second terminal:
+1. `TaskDistribution.sln` dosyasını Visual Studio 2026 (veya güncel Visual Studio 2022) ile açın.
+2. Solution Explorer'da `TaskDistribution.API` projesine sağ tıklayıp **Set as Startup Project** seçin.
+3. Üst araç çubuğundaki çalıştır butonunun yanındaki listeden **http** profilini seçin.
+4. **Ctrl+F5** (Start Without Debugging) ile çalıştırın.
+
+> **F5 yerine Ctrl+F5 kullanmanızı öneririz.** Uygulama, kullanıcıya anlaşılır hata mesajı döndürmek için iş kuralı
+> exception'ları fırlatır (örneğin görevi olan bir personeli silmeye çalışmak). Debug modunda (F5) Visual Studio bu
+> exception'larda programı durdurur ve frontend'deki istek zaman aşımına düşer.
+
+#### Backend'in çalıştığını kontrol edin
+
+Tarayıcıda şu adresi açın: **http://localhost:5080/swagger**
+
+Swagger sayfası açılıyorsa backend çalışıyor demektir. Bu sayfadan tüm API endpoint'lerini arayüz olmadan da
+deneyebilirsiniz.
+
+İlk çalıştırmada arka planda şunlar otomatik olarak gerçekleşir:
+
+1. `src/TaskDistribution.API/taskdistribution.db` adında bir SQLite veritabanı dosyası oluşturulur.
+2. Tüm migration'lar uygulanır ve tablolar oluşturulur.
+3. Başlangıç verileri (roller, 11 personel, 8 işlem tipi) eklenir.
+
+`dotnet ef database update` gibi bir komut çalıştırmanıza **gerek yoktur.**
+
+### 3. Frontend'i (Vue) çalıştırma
+
+Backend çalışırken **yeni bir terminal** açın ve şunları çalıştırın:
 
 ```bash
 cd client
@@ -155,236 +199,167 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:5173**.
+| Komut | Ne yapar? |
+|-------|-----------|
+| `cd client` | Frontend klasörüne geçer. |
+| `npm ci` | `package-lock.json` dosyasındaki sürümlerle bağımlılıkları kurar. Sadece ilk seferde gerekir. |
+| `npm run dev` | Geliştirme sunucusunu başlatır. |
 
-The web application reads the API address from `client/.env.development`
-(`VITE_API_BASE_URL=http://localhost:5080/api`). The API allows this origin through CORS.
+Terminalde şu satırı gördüğünüzde frontend hazırdır:
 
-#### Reset the database
+```
+➜  Local:   http://localhost:5173/
+```
 
-Stop the API and delete `src/TaskDistribution.API/taskdistribution.db`. It will be recreated with the seed data on the
-next start.
+Tarayıcıda **http://localhost:5173** adresini açın. Dashboard sayfası açılmalıdır.
 
-### Seed data
+> Frontend, API adresini `client/.env.development` dosyasından okur (`VITE_API_BASE_URL=http://localhost:5080/api`).
+> Backend, bu adresten gelen isteklere CORS ayarıyla izin verir.
 
-| Data | Content |
-|------|---------|
-| Roles | Developer, Analyst, Manager |
-| Employees | 8 developers, 2 analysts, 1 manager |
-| Task types | 8 task types, each with a different difficulty from 1 to 8 |
+#### Özet: Uygulamayı her açışınızda
+
+| Terminal | Klasör | Komut |
+|----------|--------|-------|
+| 1 | `TaskDistribution/` | `dotnet run --project src/TaskDistribution.API --launch-profile http` |
+| 2 | `TaskDistribution/client/` | `npm run dev` |
+
+Ardından tarayıcıda http://localhost:5173 adresini açın. Durdurmak için her iki terminalde de **Ctrl+C** tuşlarına basın.
+
+### Alternatif: Docker ile tek komutta çalıştırma
+
+Bu yöntemde bilgisayarınızda .NET veya Node.js kurulu olmasına gerek yoktur, sadece
+[Docker Desktop](https://www.docker.com/products/docker-desktop/) yeterlidir.
+
+Docker Desktop açıkken projenin kök klasöründe şu komutu çalıştırın:
+
+```bash
+docker compose up --build
+```
+
+İlk derleme birkaç dakika sürer. Tamamlandığında:
+
+| Ne | Adres |
+|----|-------|
+| Web uygulaması | http://localhost:8080 |
+| Swagger (API) | http://localhost:5080/swagger |
+
+Docker kurulumunda iki container çalışır:
+
+```
+Tarayıcı ──► localhost:8080 ──► [client: nginx]
+                                  ├── Vue dosyalarını sunar
+                                  └── /api isteklerini ──► [api: .NET 10] ──► SQLite (Docker volume)
+```
+
+Veritabanı bir Docker volume'unda saklandığı için container'lar kapatılıp açıldığında veriler kaybolmaz.
+
+```bash
+docker compose down        # Container'ları durdurur, veriler korunur
+docker compose down -v     # Container'ları durdurur ve veritabanını siler
+```
+
+### Sık karşılaşılan sorunlar
+
+| Sorun | Çözüm |
+|-------|-------|
+| `A compatible .NET SDK was not found` | .NET 10 SDK kurulu değil. Gereksinimler bölümündeki adresten kurun. |
+| Frontend'de *"The server could not be reached"* mesajı | Backend çalışmıyor. Backend terminalinin açık olduğunu ve http://localhost:5080/swagger adresinin açıldığını kontrol edin. |
+| Frontend'de *"The server took too long to respond"* mesajı | Backend Visual Studio'da **F5** ile çalıştırılmış ve bir exception'da durmuş. **Ctrl+F5** ile çalıştırın. |
+| Tarayıcı konsolunda `blocked by CORS policy` hatası | Frontend'i `http://localhost:5173` adresinden açtığınızdan emin olun. `127.0.0.1` farklı bir adres sayılır. |
+| `npm run dev` çalışırken `Cannot find native binding` hatası | Node.js sürümü eski. Node.js 24 LTS kurun, ardından `client` klasöründe `node_modules` klasörünü silip `npm ci` komutunu tekrar çalıştırın. |
+| `Port 5173 is already in use` | Başka bir Vite uygulaması açık. Onu kapatın. Backend'deki CORS ayarı sadece bu porta izin verdiği için port değiştirilmemelidir. |
+| Veritabanını sıfırlamak istiyorum | Backend'i durdurun, `src/TaskDistribution.API/taskdistribution.db` dosyasını silin ve backend'i tekrar başlatın. Veritabanı başlangıç verileriyle yeniden oluşturulur. |
 
 ---
 
-## How to use
+## Veritabanı (SQLite)
 
-1. **Work items → New work item.** Create a task with a title and description. Its status is *New*.
-2. **Analyze.** An analyst picks a task type. The difficulty of that task type is copied to the work item
-   and its status becomes *Analyzed*.
-3. **Assign** (or **Analyze and assign** in one step). The system selects the fairest developer and shows
-   *why* that developer was chosen. The status becomes *Assigned*.
-4. **Complete** the task when the developer finishes it.
-5. Follow the distribution on the **Dashboard** and the full history on the **Assignments** page.
+### Neden SQLite?
 
-Employees and task types are managed on their own pages. An employee who has received tasks can't be deleted,
-because the record is part of the distribution history. Instead, the application offers to **deactivate** them.
-Inactive employees are excluded from automatic assignment.
+[SQLite](https://www.sqlite.org), tüm veritabanını **tek bir dosyada** tutan, sunucu gerektirmeyen bir veritabanıdır.
+Case study'de de belirtildiği gibi sunucu yazılımı ve yapılandırma gerektirmediği için tercih edildi:
 
----
+- Projeyi klonlayan herkes, hiçbir veritabanı kurulumu yapmadan uygulamayı çalıştırabilir.
+- SQL Server veya PostgreSQL gibi bir sunucuya, kullanıcı adına veya şifreye ihtiyaç yoktur.
+- Repository'de gizli bir connection string veya şifre bulunmaz.
 
-## Assignment algorithm
+Uygulama **Entity Framework Core** üzerinden veritabanına eriştiği için, ileride SQL Server veya PostgreSQL'e geçmek
+sadece `Infrastructure` katmanında sağlayıcının (provider) değiştirilmesiyle mümkündür. Diğer katmanlar veritabanı
+türünü bilmez.
 
-> The full flowchart is in [docs/assignment-algorithm.md](docs/assignment-algorithm.md)
-> and as an image in [docs/assignment-algorithm.png](docs/assignment-algorithm.png).
+### Veritabanı nerede?
 
-### Interpreting the rule
+| Çalıştırma şekli | Dosya konumu |
+|------------------|--------------|
+| Terminal veya Visual Studio | `src/TaskDistribution.API/taskdistribution.db` |
+| Docker | `api-data` adlı Docker volume'u (`/app/data/taskdistribution.db`) |
 
-The case states that tasks must be distributed fairly per difficulty level, *"on condition that tasks are not
-assigned to developers in consecutive difficulty"*. The sentence is ambiguous, so all three possible readings are
-implemented as separate rules behind the `IAssignmentRule` interface:
+Veritabanı dosyası `.gitignore` ile repository'nin dışında tutulur. Her makinede migration'lar ile yeniden oluşturulur.
 
-| Rule | Key | Meaning | Default |
-|------|-----|---------|---------|
-| A | `ConsecutiveDifficulty` | A developer can't receive a task whose difficulty is adjacent (±1) to their last task. Last task 5 → 4 and 6 are not allowed. | **Enabled** |
-| B | `ConsecutiveAssignment` | The developer who received the most recent task can't receive the next one. | Disabled |
-| C | `ConsecutiveHardTask` | A developer whose last task was hard (≥ 6) can't receive another hard task. | Disabled |
+### Code-First yaklaşımı
 
-**Rule A is enabled by default** because it is the most literal reading of the sentence. Rules can be combined and
-are switched on in `appsettings.json` without changing any code. Adding a new interpretation only requires a new class
-that implements `IAssignmentRule` (Open/Closed Principle).
+Tablolar elle oluşturulmadı. C# sınıflarından (entity) **Code-First** yaklaşımıyla üretildi:
 
-### Steps
+1. `Domain/Entities` klasöründeki sınıflar tabloların karşılığıdır.
+2. `Infrastructure/Persistence/Configurations` klasöründeki Fluent API sınıfları kolon uzunluklarını, ilişkileri,
+   index'leri ve kısıtları (constraint) tanımlar.
+3. `Infrastructure/Persistence/Migrations` klasöründeki migration dosyaları, bu tanımlardan üretilmiş SQL adımlarıdır.
+4. `Infrastructure/Persistence/Seed/SeedData.cs` başlangıç verilerini içerir. Bu veriler de migration'ın bir parçasıdır.
 
-For a new work item with difficulty **d**:
+### Tablolar
 
-1. **Candidate pool:** active employees with the *Developer* role.
-2. **Rule filter:** keep developers who satisfy **all** enabled rules.
-3. **Fairness ordering**, applied as tie breakers in this order:
-   1. Fewest tasks at difficulty **d** (fairness per difficulty level)
-   2. Lowest total workload (sum of difficulties of all received tasks)
-   3. Longest time since the last assignment (developers without any assignment come first)
-   4. Lowest employee id, so the result is always deterministic
-4. **Fallback:** if nobody passes the rule filter, the rules are relaxed and the same ordering is applied to all
-   active developers. The assignment is logged with `IsRuleRelaxed = true`.
-5. **Persist:** the work item update and the assignment log are written in a **single transaction**.
+| Tablo | Açıklama | Önemli kurallar |
+|-------|----------|-----------------|
+| `Roles` | Roller: Developer, Analyst, Manager | Rol adı benzersiz |
+| `Employees` | Personel (ad, soyad, rol, aktiflik durumu) | Personeli olan rol silinemez |
+| `TaskTypes` | 8 işlem tipi ve zorlukları | Zorluk 1–8 arasında olmalı (check constraint) ve her işlem tipinin zorluğu farklı olmalı (unique index) |
+| `WorkItems` | Görevler: başlık, durum, işlem tipi, zorluk, atanan kişi ve tarihler | Durum metin olarak saklanır (`Assigned` gibi). Atama sorguları için `(AssignedEmployeeId, AssignedAt)` index'i vardır. |
+| `AssignmentLogs` | Her atamanın kaydı: kime atandı, hangi kurallar uygulandı, kural esnetildi mi, gerekçe | Görev silinirse kaydı da silinir (cascade) |
+| `__EFMigrationsHistory` | EF Core'un hangi migration'ların uygulandığını takip ettiği tablo | EF Core tarafından otomatik yönetilir |
 
-Every assignment returns a human-readable reason, for example:
+Tüm tablolarda `CreatedAt` ve `UpdatedAt` kolonları vardır. Bu kolonlar bir EF Core interceptor'ı tarafından otomatik
+doldurulur.
 
-> *Ayşe Kaya was selected among 7 of 8 eligible developers (0 task(s) at level 4, total workload 0,
-> no previous assignments).*
-
-```mermaid
-flowchart TD
-    Start(["Assign work item with difficulty d"]) --> Pool["Active developers"]
-    Pool --> Filter["Keep developers who satisfy<br/>all enabled rules"]
-    Filter --> Any{"Anyone eligible?"}
-    Any -- Yes --> Order["Order by fairness:<br/>1. tasks at level d<br/>2. total workload<br/>3. idle time<br/>4. employee id"]
-    Any -- No --> Relax["Relax rules, use all<br/>active developers"]
-    Relax --> Order
-    Order --> Pick["Select the first developer"]
-    Pick --> Save["Assign and log in one transaction"]
-```
-
-### Measuring fairness
-
-The dashboard shows **Jain's fairness index** over the total workload of active developers:
-
-```
-J = (x₁ + x₂ + … + xₙ)² / (n · (x₁² + x₂² + … + xₙ²))
-```
-
-It is **100%** when every developer carries the same workload and **1/n** when one developer does all the work
-(12.5% for 8 developers). The dashboard also shows the largest difference in task counts per difficulty level.
-
----
-
-## Architecture
-
-The backend follows a **layered (Clean / Onion) architecture**. Dependencies point inwards: the domain knows nothing
-about the database, the web or any framework.
-
-```mermaid
-flowchart LR
-    Client["Vue 3 SPA<br/>client/"] -- "HTTP / JSON" --> API
-
-    subgraph Backend
-        API["API<br/>Controllers, error handling, DI"]
-        APP["Application<br/>Services, DTOs, validation,<br/>assignment algorithm"]
-        DOM["Domain<br/>Entities, business rules"]
-        INF["Infrastructure<br/>EF Core, repositories,<br/>migrations, seed"]
-    end
-
-    API --> APP
-    API --> INF
-    INF --> APP
-    APP --> DOM
-    INF --> DB[("SQLite")]
-```
-
-| Project | Responsibility | Depends on |
-|---------|----------------|------------|
-| `TaskDistribution.Domain` | Entities, enums, domain rules (`WorkItem.Analyze`, `AssignTo`, `Complete`) | – |
-| `TaskDistribution.Application` | Use cases, DTOs, validators, repository interfaces, assignment rules and selector | Domain |
-| `TaskDistribution.Infrastructure` | `DbContext`, Fluent API mappings, repositories, Unit of Work, migrations, seed data | Application |
-| `TaskDistribution.API` | REST controllers, global exception handling, CORS, Swagger, composition root | Application, Infrastructure |
-| `TaskDistribution.Tests` | Unit tests for rules, selector, fairness calculator and domain | Application, Domain |
-| `client` | Vue 3 single page application | API over HTTP |
-
-### Project structure
-
-```
-TaskDistribution/
-├── src/
-│   ├── TaskDistribution.Domain/
-│   │   ├── Common/              BaseEntity
-│   │   ├── Constants/           DifficultyLevel, RoleNames
-│   │   ├── Entities/            Role, Employee, TaskType, WorkItem, AssignmentLog
-│   │   ├── Enums/               WorkItemStatus
-│   │   └── Exceptions/          DomainException
-│   ├── TaskDistribution.Application/
-│   │   ├── Abstractions/        IRepository<T>, specific repositories, IUnitOfWork
-│   │   ├── Common/              NotFoundException, ConflictException
-│   │   └── Features/
-│   │       ├── Assignments/     Rules, Selection, Settings, assignment services
-│   │       ├── Dashboard/       Statistics, FairnessCalculator
-│   │       ├── Employees/       DTOs, validators, service
-│   │       ├── Roles/
-│   │       ├── TaskTypes/
-│   │       └── WorkItems/
-│   ├── TaskDistribution.Infrastructure/
-│   │   └── Persistence/         DbContext, Configurations, Migrations, Repositories, Seed, Interceptors
-│   └── TaskDistribution.API/
-│       ├── Controllers/
-│       └── ExceptionHandling/
-├── tests/TaskDistribution.Tests/
-├── client/                      Vue 3 application
-│   └── src/
-│       ├── api/                 HTTP client and one module per resource
-│       ├── components/          Shared components and feature components
-│       ├── stores/              Pinia stores
-│       ├── utils/               Formatters and helpers
-│       └── views/               Pages
-├── docs/                        Flowchart and screenshots
-└── docker-compose.yml
-```
-
-### Patterns and principles
-
-| Principle / pattern | Where |
-|---------------------|-------|
-| **Layered architecture** | Four backend projects with inward-pointing dependencies |
-| **Repository Pattern** | Generic `IRepository<T>` plus specific repositories for queries with includes |
-| **Unit of Work** | `IUnitOfWork` for saving and transactions; all repositories share one scoped `DbContext` |
-| **Strategy Pattern** | `IAssignmentRule` with three interchangeable rule implementations |
-| **Single Responsibility** | Rules only check, the selector only selects, the service only orchestrates |
-| **Open/Closed** | New rules or entity configurations are added without changing existing code |
-| **Liskov Substitution** | Any `IAssignmentRule` or repository implementation can replace another |
-| **Interface Segregation** | Services depend only on the repositories they use; `IUnitOfWork` doesn't expose repositories |
-| **Dependency Inversion** | Application defines interfaces, Infrastructure implements them; wired up through DI |
-| **Rich domain model** | `WorkItem` protects its state with private setters and guarded methods |
-| **Code-First** | Fluent API configurations, migrations and seed data in `Infrastructure/Persistence` |
-
----
-
-## Data model
+### Veri modeli
 
 ```mermaid
 erDiagram
-    Role ||--o{ Employee : has
-    Employee ||--o{ WorkItem : "is assigned"
-    TaskType ||--o{ WorkItem : classifies
-    WorkItem ||--o{ AssignmentLog : "is logged in"
-    Employee ||--o{ AssignmentLog : receives
+    Roles ||--o{ Employees : "sahiptir"
+    Employees ||--o{ WorkItems : "atanır"
+    TaskTypes ||--o{ WorkItems : "sınıflandırır"
+    WorkItems ||--o{ AssignmentLogs : "kaydedilir"
+    Employees ||--o{ AssignmentLogs : "alır"
 
-    Role {
+    Roles {
         int Id PK
         string Name
     }
-    Employee {
+    Employees {
         int Id PK
         string FirstName
         string LastName
         bool IsActive
         int RoleId FK
     }
-    TaskType {
+    TaskTypes {
         int Id PK
         string Name
         string Description
-        int Difficulty "1-8, unique"
+        int Difficulty "1-8, benzersiz"
     }
-    WorkItem {
+    WorkItems {
         int Id PK
         string Title
         string Description
         string Status
         int TaskTypeId FK
-        int Difficulty "snapshot"
+        int Difficulty "analiz anındaki kopya"
         int AssignedEmployeeId FK
         datetime AnalyzedAt
         datetime AssignedAt
         datetime CompletedAt
     }
-    AssignmentLog {
+    AssignmentLogs {
         int Id PK
         int WorkItemId FK
         int EmployeeId FK
@@ -396,53 +371,262 @@ erDiagram
     }
 ```
 
-All entities also have `CreatedAt` and `UpdatedAt`, filled automatically by an EF Core interceptor.
+### Başlangıç verileri (seed)
+
+| Veri | İçerik |
+|------|--------|
+| Roller | Developer, Analyst, Manager |
+| Personel | 8 developer, 2 analist, 1 yönetici |
+| İşlem tipleri | Her biri farklı zorlukta 8 işlem tipi (1–8) |
+
+### Veritabanını görüntüleme
+
+Veritabanını incelemek için ücretsiz [DB Browser for SQLite](https://sqlitebrowser.org) uygulaması kullanılabilir:
+
+1. DB Browser for SQLite'ı açın.
+2. **Open Database** butonuna basıp `src/TaskDistribution.API/taskdistribution.db` dosyasını seçin.
+3. **Database Structure** sekmesinde tabloları ve kolonları, **Browse Data** sekmesinde kayıtları görebilirsiniz.
+
+> Veritabanını uygulama çalışırken **sadece okumak** için açın. Değişiklik yapıp kaydederseniz uygulamanın kayıtlarıyla
+> çakışabilir.
+
+#### Tablo yapısı
+
+![Veritabanı tabloları](docs/screenshots/db-structure.png)
+
+#### Örnek veriler
+
+| Employees | TaskTypes |
+|-----------|-----------|
+| ![Employees tablosu](docs/screenshots/db-employees.png) | ![TaskTypes tablosu](docs/screenshots/db-task-types.png) |
+
+| WorkItems | AssignmentLogs |
+|-----------|----------------|
+| ![WorkItems tablosu](docs/screenshots/db-work-items.png) | ![AssignmentLogs tablosu](docs/screenshots/db-assignment-logs.png) |
 
 ---
 
-## API endpoints
+## Uygulamanın kullanımı
 
-All endpoints return JSON. Errors use the standard [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) format.
+1. **Work items → New work item:** Başlık ve açıklama ile yeni bir görev oluşturun. Görevin durumu *New* olur.
+2. **Analyze:** Analist bir işlem tipi seçer. O işlem tipinin zorluğu göreve kopyalanır ve durum *Analyzed* olur.
+3. **Assign** (veya tek adımda **Analyze and assign**): Sistem en adil developer'ı seçer ve **neden o kişiyi
+   seçtiğini** gösterir. Durum *Assigned* olur.
+4. **Complete:** Developer işi bitirdiğinde görev tamamlanır.
+5. Dağılımı **Dashboard** ekranından, tüm geçmişi **Assignments** ekranından takip edebilirsiniz.
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/roles` | List roles |
-| GET | `/api/employees` | List employees |
-| GET | `/api/employees/{id}` | Get an employee |
-| POST | `/api/employees` | Create an employee |
-| PUT | `/api/employees/{id}` | Update an employee (including activate / deactivate) |
-| DELETE | `/api/employees/{id}` | Delete an employee without assignments |
-| GET | `/api/task-types` | List task types |
-| GET | `/api/task-types/{id}` | Get a task type |
-| POST | `/api/task-types` | Create a task type |
-| PUT | `/api/task-types/{id}` | Update a task type |
-| DELETE | `/api/task-types/{id}` | Delete an unused task type |
-| GET | `/api/work-items?status=` | List work items, optionally filtered by status |
-| GET | `/api/work-items/{id}` | Get a work item |
-| POST | `/api/work-items` | Create a work item |
-| PUT | `/api/work-items/{id}` | Update title and description |
-| POST | `/api/work-items/{id}/analyze` | Set the task type and difficulty |
-| POST | `/api/work-items/{id}/assign` | **Assign the fairest developer** |
-| POST | `/api/work-items/{id}/complete` | Complete an assigned work item |
-| DELETE | `/api/work-items/{id}` | Delete a new or analyzed work item |
-| GET | `/api/assignments/rules` | List assignment rules and whether they are enabled |
-| GET | `/api/assignments/logs?count=` | Recent assignment history |
-| GET | `/api/dashboard` | Workload statistics and fairness index |
-
-| Status code | When |
-|-------------|------|
-| 400 | Validation error or domain rule violation (e.g. analyzing an assigned work item) |
-| 404 | The requested record doesn't exist |
-| 409 | Conflict (e.g. deleting an employee who has assignments, duplicate difficulty) |
-
-Ready-made requests are in `src/TaskDistribution.API/TaskDistribution.API.http` (Visual Studio and VS Code can send
-them directly).
+Personel ve işlem tipleri kendi ekranlarından yönetilir. Görev almış bir personel silinemez, çünkü kaydı dağıtım
+geçmişinin bir parçasıdır. Bunun yerine uygulama personeli **pasif yapmayı** önerir. Pasif personel otomatik atama
+havuzuna dahil edilmez.
 
 ---
 
-## Configuration
+## Atama algoritması
 
-`src/TaskDistribution.API/appsettings.json`:
+> Ayrıntılı flowchart: [docs/assignment-algorithm.md](docs/assignment-algorithm.md)
+> · Görsel olarak: [docs/assignment-algorithm.png](docs/assignment-algorithm.png)
+
+### Kuralın yorumlanması
+
+Case study'de görevlerin zorluk seviyesine göre adil dağıtılması, *"görevlerin ardışık zorlukta developerlara
+atanmaması şartı ile"* isteniyor. Bu cümle birden fazla şekilde yorumlanabildiği için üç olası yorumun **üçü de**
+`IAssignmentRule` arayüzünü uygulayan ayrı kurallar olarak yazıldı:
+
+| Kural | Anahtar | Anlamı | Varsayılan |
+|-------|---------|--------|------------|
+| A | `ConsecutiveDifficulty` | Bir developer'a, son aldığı görevin zorluğuna komşu (±1) seviyede görev verilmez. Son görevi 5 ise 4 ve 6 verilemez. | **Açık** |
+| B | `ConsecutiveAssignment` | Son görevi alan developer, bir sonraki görevi alamaz. | Kapalı |
+| C | `ConsecutiveHardTask` | Son görevi zor (≥ 6) olan developer'a yeniden zor görev verilmez. | Kapalı |
+
+**Kural A varsayılan olarak açıktır**, çünkü cümlenin en doğrudan okuması budur. Kurallar birlikte de kullanılabilir ve
+kod değiştirmeden `appsettings.json` dosyasından açılıp kapatılır. Yeni bir yorum eklemek için `IAssignmentRule`
+arayüzünü uygulayan yeni bir sınıf yazmak yeterlidir (Open/Closed Principle).
+
+### Adımlar
+
+Zorluğu **d** olan analiz edilmiş bir görev için:
+
+1. **Aday havuzu:** Rolü *Developer* olan aktif personel.
+2. **Kural filtresi:** Aktif kuralların **hepsini** sağlayan developer'lar kalır.
+3. **Adalet sıralaması** (eşitlik durumunda bir sonraki kritere geçilir):
+   1. **d** seviyesinde en az görev almış olan (seviye bazında adalet)
+   2. Toplam iş yükü (aldığı görevlerin zorluk toplamı) en düşük olan
+   3. En uzun süredir görev almamış olan (hiç görev almamış olan en öndedir)
+   4. Id'si en küçük olan (aynı girdi her zaman aynı sonucu versin diye)
+4. **Fallback:** Kural filtresinden kimse geçemezse kurallar esnetilir ve aynı sıralama tüm aktif developer'lara
+   uygulanır. Atama kaydı `IsRuleRelaxed = true` olarak işaretlenir.
+5. **Kayıt:** Görevin güncellenmesi ve atama kaydının yazılması **tek bir transaction** içinde yapılır.
+
+Her atama, okunabilir bir gerekçeyle birlikte döner. Örnek:
+
+> *Ayşe Kaya was selected among 7 of 8 eligible developers (0 task(s) at level 4, total workload 0,
+> no previous assignments).*
+>
+> *(Ayşe Kaya, uygun 8 developer'dan 7'si arasından seçildi: 4. seviyede 0 görev, toplam iş yükü 0, daha önce görev almadı.)*
+
+```mermaid
+flowchart TD
+    Start(["Zorluğu d olan görev için atama"]) --> Pool["Aktif developer'lar"]
+    Pool --> Filter["Aktif kuralların hepsini<br/>sağlayanları tut"]
+    Filter --> Any{"Uygun developer var mı?"}
+    Any -- Evet --> Order["Adalete göre sırala:<br/>1. d seviyesindeki görev sayısı<br/>2. toplam iş yükü<br/>3. boşta geçen süre<br/>4. Id"]
+    Any -- Hayır --> Relax["Kuralları esnet,<br/>tüm aktif developer'ları kullan"]
+    Relax --> Order
+    Order --> Pick["İlk sıradakini seç"]
+    Pick --> Save["Atamayı ve kaydı<br/>tek transaction'da yaz"]
+```
+
+### Adaletin ölçülmesi
+
+Dashboard, aktif developer'ların toplam iş yükü üzerinden **Jain's fairness index** (Jain adalet endeksi) değerini gösterir:
+
+```
+J = (x₁ + x₂ + … + xₙ)² / (n · (x₁² + x₂² + … + xₙ²))
+```
+
+Burada `x` her developer'ın toplam iş yükü, `n` developer sayısıdır.
+
+| Durum | Sonuç |
+|-------|-------|
+| Herkes aynı yükü taşıyor | **%100** |
+| Tüm işi tek kişi yapıyor | **1/n** (8 developer için %12,5) |
+
+Dashboard ayrıca her zorluk seviyesinde en çok ve en az görev alan developer arasındaki en büyük farkı da gösterir.
+
+---
+
+## Mimari
+
+Backend **katmanlı mimari** (Clean / Onion Architecture) ile kurulmuştur. Bağımlılıklar içe doğrudur: Domain katmanı
+veritabanını, web'i veya herhangi bir framework'ü bilmez.
+
+```mermaid
+flowchart LR
+    Client["Vue 3 SPA<br/>client/"] -- "HTTP / JSON" --> API
+
+    subgraph Backend
+        API["API<br/>Controller'lar, hata yönetimi, DI"]
+        APP["Application<br/>Servisler, DTO'lar, doğrulama,<br/>atama algoritması"]
+        DOM["Domain<br/>Entity'ler, iş kuralları"]
+        INF["Infrastructure<br/>EF Core, repository'ler,<br/>migration'lar, seed"]
+    end
+
+    API --> APP
+    API --> INF
+    INF --> APP
+    APP --> DOM
+    INF --> DB[("SQLite")]
+```
+
+| Proje | Sorumluluğu | Bağımlı olduğu |
+|-------|-------------|----------------|
+| `TaskDistribution.Domain` | Entity'ler, enum'lar, iş kuralları (`WorkItem.Analyze`, `AssignTo`, `Complete`) | – |
+| `TaskDistribution.Application` | Servisler, DTO'lar, validator'lar, repository arayüzleri, atama kuralları ve seçici | Domain |
+| `TaskDistribution.Infrastructure` | `DbContext`, Fluent API eşlemeleri, repository'ler, Unit of Work, migration'lar, seed | Application |
+| `TaskDistribution.API` | REST controller'lar, global hata yönetimi, CORS, Swagger, bağımlılıkların kaydı | Application, Infrastructure |
+| `TaskDistribution.Tests` | Kurallar, seçici, adalet hesaplaması ve domain için birim testleri | Application, Domain |
+| `client` | Vue 3 tek sayfa uygulaması (SPA) | API (HTTP üzerinden) |
+
+### Klasör yapısı
+
+```
+TaskDistribution/
+├── src/
+│   ├── TaskDistribution.Domain/
+│   │   ├── Common/              BaseEntity
+│   │   ├── Constants/           DifficultyLevel, RoleNames
+│   │   ├── Entities/            Role, Employee, TaskType, WorkItem, AssignmentLog
+│   │   ├── Enums/               WorkItemStatus
+│   │   └── Exceptions/          DomainException
+│   ├── TaskDistribution.Application/
+│   │   ├── Abstractions/        IRepository<T>, özel repository'ler, IUnitOfWork
+│   │   ├── Common/              NotFoundException, ConflictException
+│   │   └── Features/
+│   │       ├── Assignments/     Kurallar, seçici, ayarlar, atama servisleri
+│   │       ├── Dashboard/       İstatistikler, FairnessCalculator
+│   │       ├── Employees/       DTO'lar, validator'lar, servis
+│   │       ├── Roles/
+│   │       ├── TaskTypes/
+│   │       └── WorkItems/
+│   ├── TaskDistribution.Infrastructure/
+│   │   └── Persistence/         DbContext, Configurations, Migrations, Repositories, Seed, Interceptors
+│   └── TaskDistribution.API/
+│       ├── Controllers/
+│       └── ExceptionHandling/
+├── tests/TaskDistribution.Tests/
+├── client/
+│   └── src/
+│       ├── api/                 HTTP istemcisi ve her kaynak için bir modül
+│       ├── components/          Ortak ve ekrana özel bileşenler
+│       ├── stores/              Pinia store'ları
+│       ├── utils/               Biçimlendirme ve yardımcı fonksiyonlar
+│       └── views/               Sayfalar
+├── docs/                        Flowchart ve ekran görüntüleri
+└── docker-compose.yml
+```
+
+### Kullanılan prensipler ve pattern'ler
+
+| Prensip / pattern | Nerede kullanıldı? |
+|-------------------|--------------------|
+| **Katmanlı mimari** | Bağımlılıkları içe doğru olan dört backend projesi |
+| **Repository Pattern** | Ortak işlemler için generic `IRepository<T>`, `Include` gerektiren sorgular için özel repository'ler |
+| **Unit of Work** | Kaydetme ve transaction için `IUnitOfWork`. Tüm repository'ler aynı scoped `DbContext`'i paylaşır. |
+| **Strategy Pattern** | `IAssignmentRule` arayüzü ve birbirinin yerine kullanılabilen üç kural |
+| **Single Responsibility** | Kurallar sadece kontrol eder, seçici sadece seçer, servis sadece koordine eder. |
+| **Open/Closed** | Yeni kural veya entity eşlemesi mevcut koda dokunmadan eklenir. |
+| **Liskov Substitution** | Herhangi bir `IAssignmentRule` veya repository implementasyonu bir diğerinin yerine geçebilir. |
+| **Interface Segregation** | Servisler sadece kullandıkları repository'lere bağımlıdır. `IUnitOfWork` repository'leri dışarı açmaz. |
+| **Dependency Inversion** | Arayüzler Application'da tanımlanır, Infrastructure bunları uygular. DI ile birbirine bağlanır. |
+| **Zengin domain modeli** | `WorkItem` durumunu private setter'lar ve kontrollü metotlarla korur. |
+| **Code-First** | Fluent API eşlemeleri, migration'lar ve seed verileri `Infrastructure/Persistence` altında |
+
+---
+
+## API endpoint'leri
+
+Tüm endpoint'ler JSON döner. Hatalar standart [ProblemDetails](https://www.rfc-editor.org/rfc/rfc9457) formatındadır.
+Tüm endpoint'leri **http://localhost:5080/swagger** adresinden deneyebilirsiniz.
+
+| Metot | Endpoint | Açıklama |
+|-------|----------|----------|
+| GET | `/api/roles` | Rolleri listeler |
+| GET | `/api/employees` | Personeli listeler |
+| GET | `/api/employees/{id}` | Bir personeli getirir |
+| POST | `/api/employees` | Personel ekler |
+| PUT | `/api/employees/{id}` | Personeli günceller (aktif/pasif yapma dahil) |
+| DELETE | `/api/employees/{id}` | Görevi olmayan personeli siler |
+| GET | `/api/task-types` | İşlem tiplerini listeler |
+| GET | `/api/task-types/{id}` | Bir işlem tipini getirir |
+| POST | `/api/task-types` | İşlem tipi ekler |
+| PUT | `/api/task-types/{id}` | İşlem tipini günceller |
+| DELETE | `/api/task-types/{id}` | Kullanılmayan işlem tipini siler |
+| GET | `/api/work-items?status=` | Görevleri listeler, isteğe bağlı olarak duruma göre filtreler |
+| GET | `/api/work-items/{id}` | Bir görevi getirir |
+| POST | `/api/work-items` | Görev ekler |
+| PUT | `/api/work-items/{id}` | Görevin başlık ve açıklamasını günceller |
+| POST | `/api/work-items/{id}/analyze` | İşlem tipini ve zorluğu belirler |
+| POST | `/api/work-items/{id}/assign` | **En adil developer'ı atar** |
+| POST | `/api/work-items/{id}/complete` | Atanmış görevi tamamlar |
+| DELETE | `/api/work-items/{id}` | Yeni veya analiz edilmiş görevi siler |
+| GET | `/api/assignments/rules` | Atama kurallarını ve açık olup olmadıklarını listeler |
+| GET | `/api/assignments/logs?count=` | Son atamaların geçmişini getirir |
+| GET | `/api/dashboard` | İş yükü istatistiklerini ve adalet endeksini getirir |
+
+| HTTP kodu | Ne zaman döner? |
+|-----------|-----------------|
+| 400 | Doğrulama hatası veya iş kuralı ihlali (örneğin atanmış bir görevi yeniden analiz etmek) |
+| 404 | İstenen kayıt bulunamadı |
+| 409 | Çakışma (örneğin görevi olan personeli silmek veya aynı zorlukta ikinci bir işlem tipi eklemek) |
+
+Hazır istek örnekleri `src/TaskDistribution.API/TaskDistribution.API.http` dosyasındadır. Visual Studio ve VS Code
+bu istekleri doğrudan gönderebilir.
+
+---
+
+## Yapılandırma
+
+Ayarlar `src/TaskDistribution.API/appsettings.json` dosyasındadır:
 
 ```json
 {
@@ -459,15 +643,15 @@ them directly).
 }
 ```
 
-| Setting | Description |
-|---------|-------------|
-| `ConnectionStrings:DefaultConnection` | SQLite file. A relative path is resolved against the API project folder. |
-| `Assignment:EnabledRules` | Enabled rule keys: `ConsecutiveDifficulty`, `ConsecutiveAssignment`, `ConsecutiveHardTask`. Rules can be combined. |
-| `Assignment:HardTaskThreshold` | Minimum difficulty treated as "hard" by rule C. |
-| `Cors:AllowedOrigins` | Origins allowed to call the API from the browser. |
+| Ayar | Açıklama |
+|------|----------|
+| `ConnectionStrings:DefaultConnection` | SQLite dosyası. Göreli bir yol verilirse API projesinin klasörüne göre çözümlenir. |
+| `Assignment:EnabledRules` | Açık olan kuralların anahtarları: `ConsecutiveDifficulty`, `ConsecutiveAssignment`, `ConsecutiveHardTask`. Birden fazlası birlikte kullanılabilir. |
+| `Assignment:HardTaskThreshold` | Kural C'nin "zor" kabul ettiği en düşük zorluk seviyesi |
+| `Cors:AllowedOrigins` | Tarayıcıdan API'ye istek gönderebilecek adresler |
 
-Assignment settings are read through `IOptionsMonitor`, so **changes take effect while the API is running**,
-without a restart. For example, to enable rules A and C:
+Atama ayarları `IOptionsMonitor` ile okunduğu için **API çalışırken yapılan değişiklikler yeniden başlatmaya gerek
+kalmadan devreye girer.** Örneğin A ve C kurallarını birlikte açmak için:
 
 ```json
 "EnabledRules": [ "ConsecutiveDifficulty", "ConsecutiveHardTask" ]
@@ -475,71 +659,73 @@ without a restart. For example, to enable rules A and C:
 
 ---
 
-## Tests
+## Testler
+
+Projenin kök klasöründe:
 
 ```bash
 dotnet test
 ```
 
-| Test class | What it proves |
-|------------|----------------|
-| `ConsecutiveDifficultyRuleTests` | Adjacent difficulties are excluded, others are allowed, including the 1↔2 and 7↔8 edges |
-| `ConsecutiveAssignmentRuleTests` | The developer who received the last task is excluded |
-| `ConsecutiveHardTaskRuleTests` | Consecutive hard tasks are prevented and the threshold is configurable |
-| `FairDeveloperSelectorTests` | Each fairness criterion, rule filtering, the fallback and the reason text |
-| `DeveloperCandidateBuilderTests` | Statistics are calculated correctly from the assignment history |
-| `AssignmentSimulationTests` | Over 160 assignments with 8 developers, no active rule is violated and per-difficulty spread stays ≤ 2 |
-| `FairnessCalculatorTests` | Jain's fairness index and the per-level spread |
-| `WorkItemTests` | The work item lifecycle and its guards |
+| Test sınıfı | Neyi kanıtlıyor? |
+|-------------|------------------|
+| `ConsecutiveDifficultyRuleTests` | Komşu zorluklar elenir, diğerleri geçer. 1↔2 ve 7↔8 gibi sınır değerler dahil. |
+| `ConsecutiveAssignmentRuleTests` | Son görevi alan developer elenir. |
+| `ConsecutiveHardTaskRuleTests` | Art arda zor görev engellenir ve eşik değeri ayarlanabilir. |
+| `FairDeveloperSelectorTests` | Her adalet kriteri, kural filtresi, fallback ve gerekçe metni |
+| `DeveloperCandidateBuilderTests` | İstatistiklerin atama geçmişinden doğru hesaplanması |
+| `AssignmentSimulationTests` | 8 developer'a 160 görev dağıtıldığında hiçbir aktif kural ihlal edilmez ve seviye bazındaki fark 2'yi geçmez. |
+| `FairnessCalculatorTests` | Jain adalet endeksi ve seviye bazında fark hesabı |
+| `WorkItemTests` | Görevin yaşam döngüsü ve kuralları |
 
-The selector and the rules are pure classes without database or framework dependencies, so the tests need no mocks
-and run in milliseconds.
-
----
-
-## Design decisions
-
-| Decision | Reason |
-|----------|--------|
-| **SQLite** | Runs without a database server or setup. Anyone can clone the repository and start the API. |
-| **`WorkItem` instead of `Task`** | Avoids a name clash with `System.Threading.Tasks.Task`. |
-| **Difficulty is copied to the work item** | Changing a task type later doesn't rewrite history or the fairness statistics. |
-| **Employees are deactivated, not deleted** | Assignment history and fairness statistics stay correct. |
-| **Assigned work items can't be re-analyzed or deleted** | They are part of the distribution history. |
-| **Rules are configured, not hard-coded** | The ambiguous rule can be reinterpreted without code changes. |
-| **Fairness statistics are calculated in memory** | Only four small fields per assignment are loaded. SQLite can't reliably translate date aggregates through EF Core, and the data volume of a software unit is small. |
-| **`DateTime` (UTC) instead of `DateTimeOffset`** | SQLite can't order by `DateTimeOffset`; a value converter keeps all dates marked as UTC. |
-| **`TimeProvider` instead of `DateTime.UtcNow`** | Time can be controlled in tests. |
-| **No AutoMapper** | Simple, explicit mapping methods; no extra dependency (AutoMapper is now commercially licensed). |
-| **Bootstrap CSS only, no Bootstrap JavaScript** | Modals and notifications are controlled by Vue instead of direct DOM manipulation. |
-| **Business exceptions mapped to ProblemDetails** | Controllers stay thin; every error reaches the client in the same format. |
-
-### Possible improvements
-
-- Authentication and role-based authorization (analysts analyze, managers configure rules)
-- Managing assignment rules from the UI, stored in the database (the `IAssignmentSettingsProvider` abstraction is ready for it)
-- Pagination for work items and assignment history
-- Integration tests with an in-memory SQLite database
-- Real-time updates with SignalR
+Seçici ve kurallar veritabanı veya framework bağımlılığı olmayan saf sınıflar olduğu için testlerde mock kullanılmaz
+ve testler milisaniyeler içinde çalışır.
 
 ---
 
-## Screenshots
+## Tasarım kararları
 
-| Work items | Assignment result |
-|------------|-------------------|
-| ![Work items](docs/screenshots/work-items.png) | ![Assignment result](docs/screenshots/assignment-result.png) |
+| Karar | Gerekçe |
+|-------|---------|
+| **SQLite** | Veritabanı sunucusu veya kurulum gerektirmez. Projeyi klonlayan herkes doğrudan çalıştırabilir. |
+| **`Task` yerine `WorkItem`** | `System.Threading.Tasks.Task` ile isim çakışmasını önler. |
+| **Zorluk göreve kopyalanır** | Bir işlem tipinin zorluğu sonradan değiştirilse bile geçmiş görevler ve adalet istatistikleri bozulmaz. |
+| **Personel silinmez, pasif yapılır** | Atama geçmişi ve adalet istatistikleri doğru kalır. |
+| **Atanmış görev yeniden analiz edilemez ve silinemez** | Bu görevler dağıtım geçmişinin parçasıdır. |
+| **Kurallar koda gömülü değil, ayardan okunur** | Belirsiz kural, kod değiştirmeden farklı yorumlanabilir. |
+| **Adalet istatistikleri bellekte hesaplanır** | Atama başına sadece dört küçük alan yüklenir. SQLite, tarih alanları üzerindeki toplama işlemlerini EF Core ile güvenilir şekilde çeviremez. Bir yazılım biriminin veri hacmi de küçüktür. |
+| **`DateTimeOffset` yerine `DateTime` (UTC)** | SQLite `DateTimeOffset` alanına göre sıralama yapamaz. Bir value converter tüm tarihleri UTC olarak işaretler. |
+| **`DateTime.UtcNow` yerine `TimeProvider`** | Testlerde zaman kontrol edilebilir. |
+| **AutoMapper kullanılmadı** | Sade ve açık mapping metotları, ekstra bağımlılık yok (AutoMapper artık ticari lisanslı). |
+| **Bootstrap'in sadece CSS'i kullanıldı** | Modal ve bildirimler doğrudan DOM müdahalesi yerine Vue ile yönetilir. |
+| **İş kuralı exception'ları ProblemDetails'e çevrilir** | Controller'lar sade kalır, her hata frontend'e aynı formatta ulaşır. |
 
-| Assignments | Employees |
-|-------------|-----------|
-| ![Assignments](docs/screenshots/assignments.png) | ![Employees](docs/screenshots/employees.png) |
+### Geliştirilebilecek noktalar
 
-| Task types | Swagger |
-|------------|---------|
-| ![Task types](docs/screenshots/task-types.png) | ![Swagger](docs/screenshots/swagger.png) |
+- Kimlik doğrulama ve rol bazlı yetkilendirme (analistler analiz eder, yöneticiler kuralları yönetir)
+- Atama kurallarının arayüzden yönetilip veritabanında saklanması (`IAssignmentSettingsProvider` soyutlaması buna hazırdır)
+- Görevler ve atama geçmişi için sayfalama
+- In-memory SQLite ile entegrasyon testleri
+- SignalR ile anlık güncellemeler
 
 ---
 
-## Author
+## Ekran görüntüleri
+
+| Görevler (Work items) | Atama sonucu |
+|-----------------------|--------------|
+| ![Görevler](docs/screenshots/work-items.png) | ![Atama sonucu](docs/screenshots/assignment-result.png) |
+
+| Atama geçmişi (Assignments) | Personel (Employees) |
+|-----------------------------|----------------------|
+| ![Atama geçmişi](docs/screenshots/assignments.png) | ![Personel](docs/screenshots/employees.png) |
+
+| İşlem tipleri (Task types) | Swagger |
+|----------------------------|---------|
+| ![İşlem tipleri](docs/screenshots/task-types.png) | ![Swagger](docs/screenshots/swagger.png) |
+
+---
+
+## Geliştirici
 
 **Emircan Gürbüz**
