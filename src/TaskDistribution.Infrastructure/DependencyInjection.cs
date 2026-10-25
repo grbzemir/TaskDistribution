@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
+using TaskDistribution.Application.Abstractions.Persistence;
 using TaskDistribution.Infrastructure.Persistence;
 using TaskDistribution.Infrastructure.Persistence.Interceptors;
+using TaskDistribution.Infrastructure.Persistence.Repositories;
 
 namespace TaskDistribution.Infrastructure;
 
@@ -31,6 +33,12 @@ public static class DependencyInjection
             options
                 .UseSqlite(resolvedConnectionString)
                 .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>()));
+
+        services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IWorkItemRepository, WorkItemRepository>();
+        services.AddScoped<IAssignmentLogRepository, AssignmentLogRepository>();
+        services.AddScoped<IUnitOfWork, UnitOfWork>();
 
         return services;
     }
