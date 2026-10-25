@@ -1,6 +1,8 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TaskDistribution.Application.Features.Assignments.Rules;
+using TaskDistribution.Application.Features.Assignments.Settings;
 using TaskDistribution.Application.Features.Employees;
 using TaskDistribution.Application.Features.Roles;
 using TaskDistribution.Application.Features.TaskTypes;
@@ -18,6 +20,10 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeService, EmployeeService>();
         services.AddScoped<ITaskTypeService, TaskTypeService>();
         services.AddScoped<IWorkItemService, WorkItemService>();
+        services.AddSingleton<IAssignmentRule, ConsecutiveDifficultyRule>();
+        services.AddSingleton<IAssignmentRule, ConsecutiveAssignmentRule>();
+        services.AddSingleton<IAssignmentRule, ConsecutiveHardTaskRule>();
+        services.AddSingleton<IAssignmentSettingsProvider, OptionsAssignmentSettingsProvider>();
         return services;
     }
 }

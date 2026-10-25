@@ -1,10 +1,12 @@
 using TaskDistribution.Infrastructure;
 using TaskDistribution.Infrastructure.Persistence;
 using TaskDistribution.Application;
+using TaskDistribution.Application.Features.Assignments.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
+builder.Services.Configure<AssignmentOptions>(builder.Configuration.GetSection(AssignmentOptions.SectionName));
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.ContentRootPath);
 
 builder.Services.AddControllers();
