@@ -29,3 +29,13 @@ export function formatRelativeTime(value) {
 
     return 'just now'
 }
+
+export function getInitials(fullName) {
+    return (fullName ?? '')
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0))
+        .join('')
+        .toLocaleUpperCase('tr')
+}

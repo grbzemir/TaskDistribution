@@ -714,3 +714,191 @@ body {
     color: var(--app-muted);
     font-size: 0.75rem;
 }
+
+/* Avatar sizes */
+.avatar-sm {
+    width: 28px;
+    height: 28px;
+    font-size: 0.6875rem;
+}
+
+.avatar-lg {
+    width: 48px;
+    height: 48px;
+    font-size: 1rem;
+}
+
+/* Task type options */
+.task-type-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+@media (max-width: 575.98px) {
+    .task-type-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+.task-type-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.task-type-option:hover {
+    background: var(--app-surface-muted);
+}
+
+.task-type-option.selected {
+    border-color: var(--app-primary);
+    background: var(--app-primary-soft);
+    box-shadow: 0 0 0 1px var(--app-primary);
+}
+
+.task-type-option:has(input:focus-visible) {
+    outline: 2px solid var(--app-primary);
+    outline-offset: 2px;
+}
+
+.task-type-option .difficulty-badge {
+    margin-top: 2px;
+}
+
+.task-type-option-text {
+    min-width: 0;
+    line-height: 1.35;
+}
+
+/* Assignment result */
+.assignment-hero {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: var(--app-radius);
+    background: var(--app-primary-soft);
+}
+
+.reason-box {
+    padding: 14px 16px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface-muted);
+    font-size: 0.875rem;
+}
+
+.reason-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    color: var(--app-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.rule-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border: 1px solid #bbf7d0;
+    border-radius: 999px;
+    background: #f0fdf4;
+    color: #166534;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.warning-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border: 1px solid #fde68a;
+    border-radius: var(--app-radius);
+    background: #fffbeb;
+    color: #92400e;
+    font-size: 0.875rem;
+}
+
+/* Status tabs */
+.status-tabs {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--app-border);
+    border-radius: 10px;
+    background: var(--app-surface-muted);
+}
+
+.status-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--app-muted);
+    font-size: 0.8125rem;
+    font-weight: 500;
+}
+
+.status-tab:hover {
+    color: var(--app-text);
+}
+
+.status-tab.active {
+    background: var(--app-surface);
+    color: var(--app-text);
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.status-tab-count {
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    line-height: 18px;
+    text-align: center;
+}
+
+.status-tab.active .status-tab-count {
+    background: var(--app-primary-soft);
+    color: var(--app-primary);
+}
+
+/* Text helpers */
+.text-clamp-2 {
+    display: -webkit-box;
+    max-width: 420px;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+}
+
+/* Workflow buttons inside table actions */
+.table-actions .workflow-action {
+    color: var(--bs-btn-color);
+    white-space: nowrap;
+}
+
+.table-actions .workflow-action:hover {
+    background: var(--bs-btn-hover-bg);
+    color: var(--bs-btn-hover-color);
+}
