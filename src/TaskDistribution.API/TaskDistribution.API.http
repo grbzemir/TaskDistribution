@@ -1,6 +1,49 @@
-@TaskDistribution.API_HostAddress = http://localhost:5086
+@baseUrl = http://localhost:5080
 
-GET {{TaskDistribution.API_HostAddress}}/weatherforecast/
-Accept: application/json
+### List roles
+GET {{baseUrl}}/api/roles
 
-###
+### List employees
+GET {{baseUrl}}/api/employees
+
+### Create employee
+POST {{baseUrl}}/api/employees
+Content-Type: application/json
+
+{
+  "firstName": "Kerem",
+  "lastName": "Ateş",
+  "roleId": 1
+}
+
+### List task types
+GET {{baseUrl}}/api/task-types
+
+### Create work item
+POST {{baseUrl}}/api/work-items
+Content-Type: application/json
+
+{
+  "title": "Fix invoice export bug",
+  "description": "Invoice PDF export fails for multi-page shipments."
+}
+
+### Analyze work item (set task type and difficulty)
+POST {{baseUrl}}/api/work-items/1/analyze
+Content-Type: application/json
+
+{
+  "taskTypeId": 5
+}
+
+### Assign work item to the fairest developer
+POST {{baseUrl}}/api/work-items/1/assign
+
+### List analyzed work items
+GET {{baseUrl}}/api/work-items?status=Analyzed
+
+### List assignment rules
+GET {{baseUrl}}/api/assignments/rules
+
+### List recent assignment logs
+GET {{baseUrl}}/api/assignments/logs?count=20

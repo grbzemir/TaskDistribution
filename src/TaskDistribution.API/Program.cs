@@ -1,9 +1,12 @@
 using System.Text.Json.Serialization;
+
 using TaskDistribution.API.ExceptionHandling;
 using TaskDistribution.Application;
 using TaskDistribution.Application.Features.Assignments.Settings;
 using TaskDistribution.Infrastructure;
 using TaskDistribution.Infrastructure.Persistence;
+
+const string ClientCorsPolicy = "Client";
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +17,16 @@ builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.Co
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+var allowedOrigins = builder.Configuration
+    .GetSection("Cors:AllowedOrigins")
+    .Get<string[]>() ?? [];
+
+builder.Services.AddCors(options =>
+    options.AddPolicy(ClientCorsPolicy, policy =>
+        policy.WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod()));
 
 builder.Services
     .AddControllers()
@@ -34,8 +47,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+else
+{
+    app.UseHttpsRedirection();
+}
 
-app.UseHttpsRedirection();
+app.UseCors(ClientCorsPolicy);
 
 app.UseAuthorization();
 
