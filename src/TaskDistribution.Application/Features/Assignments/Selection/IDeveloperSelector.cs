@@ -1,9 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using TaskDistribution.Application.Features.Assignments.Models;
+using TaskDistribution.Application.Features.Assignments.Rules;
 
 namespace TaskDistribution.Application.Features.Assignments.Selection;
 
-internal interface IDeveloperSelector
+public interface IDeveloperSelector
 {
+    SelectionResult Select(
+        IReadOnlyCollection<DeveloperCandidate> candidates,
+        AssignmentContext context,
+        IReadOnlyCollection<IAssignmentRule> rules);
 }

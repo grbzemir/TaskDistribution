@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using TaskDistribution.Application.Features.Assignments.Rules;
+using TaskDistribution.Application.Features.Assignments.Selection;
 using TaskDistribution.Application.Features.Assignments.Settings;
 using TaskDistribution.Application.Features.Employees;
 using TaskDistribution.Application.Features.Roles;
@@ -24,6 +25,7 @@ public static class DependencyInjection
         services.AddSingleton<IAssignmentRule, ConsecutiveAssignmentRule>();
         services.AddSingleton<IAssignmentRule, ConsecutiveHardTaskRule>();
         services.AddSingleton<IAssignmentSettingsProvider, OptionsAssignmentSettingsProvider>();
+        services.AddSingleton<IDeveloperSelector, FairDeveloperSelector>();
         return services;
     }
 }

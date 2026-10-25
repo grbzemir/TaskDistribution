@@ -1,9 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace TaskDistribution.Application.Features.Assignments.Models;
 
-namespace TaskDistribution.Application.Features.Assignments.Models;
-
-internal class SelectionResult
-{
-}
+public sealed record SelectionResult(
+    DeveloperCandidate Selected,
+    IReadOnlyList<string> AppliedRuleKeys,
+    bool IsRuleRelaxed,
+    string Reason);
