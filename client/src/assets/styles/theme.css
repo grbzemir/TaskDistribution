@@ -606,3 +606,111 @@ body {
     background: #fef2f2;
     color: #dc2626;
 }
+
+/* Difficulty meter */
+.difficulty-meter {
+    display: inline-flex;
+    gap: 3px;
+}
+
+.difficulty-meter-step {
+    width: 14px;
+    height: 6px;
+    border-radius: 3px;
+    background: #e2e8f0;
+}
+
+.difficulty-meter-low .filled {
+    background: #22c55e;
+}
+
+.difficulty-meter-medium .filled {
+    background: #f59e0b;
+}
+
+.difficulty-meter-high .filled {
+    background: #ef4444;
+}
+
+/* Info callout */
+.info-callout {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    border-radius: var(--app-radius);
+    background: var(--app-primary-soft);
+    color: #0c4a6e;
+    font-size: 0.875rem;
+}
+
+.info-callout .bi {
+    margin-top: 1px;
+    font-size: 1.1rem;
+}
+
+/* Difficulty picker */
+.difficulty-picker {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 6px;
+    padding: 2px;
+    border-radius: 10px;
+}
+
+.difficulty-picker.is-invalid {
+    box-shadow: 0 0 0 1px #dc3545;
+}
+
+.difficulty-option {
+    height: 40px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius-sm);
+    background: var(--app-surface);
+    color: var(--app-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.difficulty-option:hover:not(:disabled) {
+    border-color: var(--app-border-strong, #cbd5e1);
+    background: var(--app-surface-muted);
+}
+
+.difficulty-option:disabled {
+    background: repeating-linear-gradient(-45deg,
+            #f8fafc,
+            #f8fafc 4px,
+            #f1f5f9 4px,
+            #f1f5f9 8px);
+    color: #cbd5e1;
+    cursor: not-allowed;
+}
+
+.difficulty-option-low.selected {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.difficulty-option-medium.selected {
+    border-color: #d97706;
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.difficulty-option-high.selected {
+    border-color: #dc2626;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.difficulty-picker-legend {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    color: var(--app-muted);
+    font-size: 0.75rem;
+}
