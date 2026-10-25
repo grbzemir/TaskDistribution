@@ -5,6 +5,7 @@ using TaskDistribution.Application.Features.Assignments;
 using TaskDistribution.Application.Features.Assignments.Rules;
 using TaskDistribution.Application.Features.Assignments.Selection;
 using TaskDistribution.Application.Features.Assignments.Settings;
+using TaskDistribution.Application.Features.Dashboard;
 using TaskDistribution.Application.Features.Employees;
 using TaskDistribution.Application.Features.Roles;
 using TaskDistribution.Application.Features.TaskTypes;
@@ -29,6 +30,7 @@ public static class DependencyInjection
         services.AddSingleton<IDeveloperSelector, FairDeveloperSelector>();
         services.AddScoped<IWorkItemAssignmentService, WorkItemAssignmentService>();
         services.AddScoped<IAssignmentQueryService, AssignmentQueryService>();
+        services.AddScoped<IDashboardService, DashboardService>();
         return services;
     }
 }
