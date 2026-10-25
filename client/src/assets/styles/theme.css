@@ -902,3 +902,99 @@ body {
     background: var(--bs-btn-hover-bg);
     color: var(--bs-btn-hover-color);
 }
+
+/* Section title */
+.section-title {
+    margin: 0 0 12px;
+    color: var(--app-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* Rule cards */
+.rule-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.rule-card {
+    padding: 16px;
+    border: 1px solid var(--app-border);
+    border-radius: var(--app-radius);
+    background: var(--app-surface);
+}
+
+.rule-card-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.rule-state {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.rule-state-on {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.rule-state-off {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+.fairness-list {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 0.8125rem;
+}
+
+.fairness-list li+li {
+    margin-top: 4px;
+}
+
+/* Assignment history */
+.log-row {
+    cursor: pointer;
+}
+
+.log-row:hover td,
+.log-row.expanded td {
+    background: var(--app-surface-muted);
+}
+
+.log-detail-row td {
+    padding-top: 0;
+    background: var(--app-surface-muted);
+}
+
+.outcome-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.outcome-ok {
+    background: #f0fdf4;
+    color: #166534;
+}
+
+.outcome-relaxed {
+    background: #fffbeb;
+    color: #92400e;
+}
