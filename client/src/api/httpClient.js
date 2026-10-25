@@ -32,11 +32,15 @@ httpClient.interceptors.response.use(
             )
         }
 
+        const isTimeout = error.code === 'ECONNABORTED'
+
         return Promise.reject(
             new ApiError({
                 status: 0,
-                title: 'Network error',
-                detail: 'The server could not be reached. Make sure the API is running.',
+                title: isTimeout ? 'Request timed out' : 'Network error',
+                detail: isTimeout
+                    ? 'The server took too long to respond. Please try again.'
+                    : 'The server could not be reached. Make sure the API is running.',
             }),
         )
     },
