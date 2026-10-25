@@ -1,9 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace TaskDistribution.Application.Features.Assignments;
 
-namespace TaskDistribution.Application.Features.Assignments;
-
-internal interface IAssignmentQueryService
+public interface IAssignmentQueryService
 {
+    Task<IReadOnlyList<AssignmentRuleDto>> GetRulesAsync(CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<AssignmentLogDto>> GetRecentLogsAsync(
+        int count,
+        CancellationToken cancellationToken = default);
 }

@@ -9,5 +9,8 @@ public interface IWorkItemRepository : IRepository<WorkItem>
         WorkItemStatus? status = null,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<AssignmentHistoryEntry>> GetAssignmentHistoryAsync(
+    CancellationToken cancellationToken = default);
+
     Task<WorkItem?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default);
 }

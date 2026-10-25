@@ -1,6 +1,7 @@
 ﻿using FluentValidation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using TaskDistribution.Application.Features.Assignments;
 using TaskDistribution.Application.Features.Assignments.Rules;
 using TaskDistribution.Application.Features.Assignments.Selection;
 using TaskDistribution.Application.Features.Assignments.Settings;
@@ -26,6 +27,8 @@ public static class DependencyInjection
         services.AddSingleton<IAssignmentRule, ConsecutiveHardTaskRule>();
         services.AddSingleton<IAssignmentSettingsProvider, OptionsAssignmentSettingsProvider>();
         services.AddSingleton<IDeveloperSelector, FairDeveloperSelector>();
+        services.AddScoped<IWorkItemAssignmentService, WorkItemAssignmentService>();
+        services.AddScoped<IAssignmentQueryService, AssignmentQueryService>();
         return services;
     }
 }

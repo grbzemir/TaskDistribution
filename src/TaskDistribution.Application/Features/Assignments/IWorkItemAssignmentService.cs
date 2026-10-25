@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿namespace TaskDistribution.Application.Features.Assignments;
 
-namespace TaskDistribution.Application.Features.Assignments;
-
-internal interface IWorkItemAssignmentService
+public interface IWorkItemAssignmentService
 {
+    Task<AssignmentResultDto> AssignAsync(int workItemId, CancellationToken cancellationToken = default);
 }

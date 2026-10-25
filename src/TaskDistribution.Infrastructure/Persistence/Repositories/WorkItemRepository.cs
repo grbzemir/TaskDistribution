@@ -28,6 +28,18 @@ public sealed class WorkItemRepository(TaskDistributionDbContext dbContext)
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IReadOnlyList<AssignmentHistoryEntry>> GetAssignmentHistoryAsync(
+    CancellationToken cancellationToken = default) =>
+    await DbSet
+        .AsNoTracking()
+        .Where(w => w.AssignedEmployeeId != null && w.Difficulty != null && w.AssignedAt != null)
+        .Select(w => new AssignmentHistoryEntry(
+            w.Id,
+            w.AssignedEmployeeId!.Value,
+            w.Difficulty!.Value,
+            w.AssignedAt!.Value))
+        .ToListAsync(cancellationToken);
+
     public Task<WorkItem?> GetByIdWithDetailsAsync(int id, CancellationToken cancellationToken = default) =>
         DbSet
             .Include(w => w.TaskType)
