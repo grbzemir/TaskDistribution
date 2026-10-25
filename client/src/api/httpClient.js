@@ -23,11 +23,11 @@ httpClient.interceptors.response.use(
             const { status, data } = error.response
 
             return Promise.reject(
-                new ApiError({
-                    status,
+                new ApiError({         status,
                     title: data?.title,
                     detail: data?.detail,
                     errors: data?.errors,
+           
                 }),
             )
         }
