@@ -1,8 +1,10 @@
 using TaskDistribution.Infrastructure;
 using TaskDistribution.Infrastructure.Persistence;
+using TaskDistribution.Application;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment.ContentRootPath);
 
 builder.Services.AddControllers();
