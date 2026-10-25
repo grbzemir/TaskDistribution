@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 using TaskDistribution.Domain.Constants;
 using TaskDistribution.Domain.Entities;
+using TaskDistribution.Infrastructure.Persistence.Seed;
 
 namespace TaskDistribution.Infrastructure.Persistence.Configurations;
 
@@ -27,5 +28,6 @@ public sealed class TaskTypeConfiguration : IEntityTypeConfiguration<TaskType>
 
         builder.HasIndex(t => t.Name).IsUnique();
         builder.HasIndex(t => t.Difficulty).IsUnique();
+        builder.HasData(SeedData.TaskTypes);
     }
 }

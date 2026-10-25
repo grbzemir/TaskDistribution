@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TaskDistribution.Domain.Entities;
+using TaskDistribution.Infrastructure.Persistence.Seed;
 
 namespace TaskDistribution.Infrastructure.Persistence.Configurations;
 
@@ -17,5 +19,6 @@ public sealed class RoleConfiguration : IEntityTypeConfiguration<Role>
             .HasMaxLength(50);
 
         builder.HasIndex(r => r.Name).IsUnique();
+        builder.HasData(SeedData.Roles);
     }
 }

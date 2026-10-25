@@ -1,4 +1,5 @@
 using TaskDistribution.Infrastructure;
+using TaskDistribution.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +10,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+await app.Services.MigrateDatabaseAsync();
 
 if (app.Environment.IsDevelopment())
 {
@@ -22,4 +25,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

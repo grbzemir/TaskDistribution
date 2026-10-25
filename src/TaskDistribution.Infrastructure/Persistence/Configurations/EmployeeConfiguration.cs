@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
 using TaskDistribution.Domain.Entities;
+using TaskDistribution.Infrastructure.Persistence.Seed;
 
 namespace TaskDistribution.Infrastructure.Persistence.Configurations;
 
@@ -28,5 +30,6 @@ public sealed class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .WithMany(r => r.Employees)
             .HasForeignKey(e => e.RoleId)
             .OnDelete(DeleteBehavior.Restrict);
+        builder.HasData(SeedData.Employees);
     }
 }
